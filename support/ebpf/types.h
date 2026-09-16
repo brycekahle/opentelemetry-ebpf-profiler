@@ -657,6 +657,20 @@ typedef struct __attribute__((packed)) ApmCorrelationBuf {
   ApmSpanID transaction_id;
 } ApmCorrelationBuf;
 
+// Defines the format of the thread context buffer an instrumented process
+// publishes through the otel_thread_ctx_v1 thread-local, per OTEP #4947. The
+// attribute payload follows immediately after this header.
+typedef struct __attribute__((packed)) ThreadContextBuf {
+  ApmTraceID trace_id;
+  ApmSpanID span_id;
+  // 0 while the writer is mid-update.
+  u8 valid;
+  // _padding on the writer side.
+  u8 _reserved;
+  // Payload length in bytes.
+  u16 attrs_data_size;
+} ThreadContextBuf;
+
 typedef struct GolangLabel {
   u8 key[16];
   u8 val[48];
