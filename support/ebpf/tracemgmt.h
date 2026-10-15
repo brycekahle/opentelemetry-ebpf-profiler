@@ -48,6 +48,9 @@ extern u32 task_stack_offset;
 // task_start_time_offset is declared in native_stack_trace.ebpf.c
 extern u32 task_start_time_offset;
 
+// task_tgid_offset is declared in native_stack_trace.ebpf.c
+extern u32 task_tgid_offset;
+
 // stack_ptregs_offset is declared in native_stack_trace.ebpf.c
 extern u32 stack_ptregs_offset;
 

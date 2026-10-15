@@ -868,6 +868,7 @@ typedef struct GoRuntimeOffsets {
   u32 sched_pc_off;
   u32 sched_lr_off;
   u32 sched_bp_off;
+  u64 mbuckets_addr;
 } GoRuntimeOffsets;
 
 typedef struct GolangLabelsState {
@@ -880,6 +881,37 @@ typedef struct GoUnwindScratchSpace {
   // runtime.g[0:sched_bp_off+8). The m prefix is the larger one and needs 200 bytes.
   u64 buf[25];
 } GoUnwindScratchSpace;
+
+// https://github.com/golang/go/blob/9450dc4b5513dbdd6454bb83c902a6612dcd5733/src/runtime/mprof.go#L147
+typedef struct GoMemRecordCycle {
+  u64 allocs;
+  u64 frees;
+  // TODO the size of this changes based on Go version
+} GoMemRecordCycle;
+
+// https://github.com/golang/go/blob/9450dc4b5513dbdd6454bb83c902a6612dcd5733/src/runtime/mprof.go#L87
+typedef struct GoMemRecord {
+  struct GoMemRecordCycle active;
+  struct GoMemRecordCycle	future[3];
+} GoMemRecord;
+
+// https://github.com/golang/go/blob/9450dc4b5513dbdd6454bb83c902a6612dcd5733/src/runtime/mprof.go#L75
+typedef struct GoBucketHeader {
+  u64 next;
+  u64 allnext;
+  u64 bucketType; // memBucket or blockBucket (includes mutexProfile)
+  u64 hash;
+  u64 size;
+  u64 nstk;
+} GoBucketHeader;
+
+// We must have a fixed size stack even though the real Go stack depth is variable.
+#define MAX_GO_OOM_STACK_DEPTH 64
+typedef struct GoBucket {
+  struct GoBucketHeader header;
+  u64 stk[MAX_GO_OOM_STACK_DEPTH];
+  struct GoMemRecord mem;
+} GoBucket;
 
 // Per-CPU info for the stack being built. This contains the stack as well as
 // meta-data on the number of eBPF tail-calls used so far to construct it.

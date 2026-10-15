@@ -21,6 +21,9 @@ type Config struct {
 	// Symbolization configures userspace symbolization of Go frames via pclntab.
 	// Enabled by default.
 	Symbolization interpreter.BaseConfig `mapstructure:"symbolization" json:"symbolization"`
+
+	// OOM configures eBPF extraction Go memory profiles on OOM
+	OOM interpreter.BaseConfig `mapstructure:"oom" json:"oom"`
 }
 
 var _ interpreter.Config = Config{}
@@ -31,4 +34,8 @@ func (c Config) IsLabelsDisabled() bool {
 
 func (c Config) IsSymbolizationDisabled() bool {
 	return c.Disabled || c.Symbolization.IsDisabled()
+}
+
+func (c Config) IsOOMDisabled() bool {
+	return c.Disabled || c.OOM.IsDisabled()
 }

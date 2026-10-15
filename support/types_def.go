@@ -124,6 +124,10 @@ type PyProcInfo C.PyProcInfo
 type RubyProcInfo C.RubyProcInfo
 type ThreadContextProcInfo C.ThreadContextProcInfo
 type V8ProcInfo C.V8ProcInfo
+type GoMemRecordCycle C.GoMemRecordCycle
+type GoMemRecord C.GoMemRecord
+type GoBucketHeader C.GoBucketHeader
+type GoBucket C.GoBucket
 
 const (
 	Sizeof_StackDelta    = C.sizeof_StackDelta
@@ -134,6 +138,8 @@ const (
 	sizeof_PHPProcInfo           = C.sizeof_PHPProcInfo
 	sizeof_RubyProcInfo          = C.sizeof_RubyProcInfo
 	sizeof_ThreadContextProcInfo = C.sizeof_ThreadContextProcInfo
+
+	Sizeof_GoBucket = C.sizeof_GoBucket
 )
 
 const (

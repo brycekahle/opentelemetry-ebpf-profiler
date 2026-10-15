@@ -29,6 +29,8 @@ func NewComm(buffer [commLen]uint8) Comm {
 func NewCommFromString(str string) Comm {
 	var buffer [commLen]uint8
 	copy(buffer[:], str)
+	// must be NUL-terminated
+	buffer[commLen-1] = 0
 	return NewComm(buffer)
 }
 

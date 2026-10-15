@@ -206,6 +206,7 @@ type GoRuntimeOffsets struct {
 	Sched_pc_off           uint32
 	Sched_lr_off           uint32
 	Sched_bp_off           uint32
+	Mbuckets_addr          uint64
 }
 type HotspotProcInfo struct {
 	Codecache_start        uint64
@@ -333,6 +334,27 @@ type V8ProcInfo struct {
 	Leaptiering                  uint8
 	Pad_cgo_0                    [5]byte
 }
+type GoMemRecordCycle struct {
+	Allocs uint64
+	Frees  uint64
+}
+type GoMemRecord struct {
+	Active GoMemRecordCycle
+	Future [3]GoMemRecordCycle
+}
+type GoBucketHeader struct {
+	Next       uint64
+	Allnext    uint64
+	BucketType uint64
+	Hash       uint64
+	Size       uint64
+	Nstk       uint64
+}
+type GoBucket struct {
+	Header GoBucketHeader
+	Stk    [64]uint64
+	Mem    GoMemRecord
+}
 
 const (
 	Sizeof_StackDelta    = 0x4
@@ -343,6 +365,8 @@ const (
 	sizeof_PHPProcInfo           = 0x18
 	sizeof_RubyProcInfo          = 0x40
 	sizeof_ThreadContextProcInfo = 0xc
+
+	Sizeof_GoBucket = 0x270
 )
 
 const (

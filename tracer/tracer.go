@@ -742,6 +742,10 @@ func loadAllMaps(coll *cebpf.CollectionSpec, cfg *Config,
 			// sched_times is owned by the off-CPU probe and created there on demand.
 			continue
 		}
+		if mapName == "mbuckets_data" || mapName == "profile_task" {
+			// maps are owned by OOM probe and created there.
+			continue
+		}
 		if mapName == obiSpanTracesMap {
 			if cfg.BPFFSRoot == "" || !cfg.OBIProcessCtx {
 				// As BPF FS is not set or process context sharing with OBI is not

@@ -140,6 +140,17 @@ func loader(cfg Config, info *interpreter.LoaderInfo) (interpreter.Data, error) 
 	}
 	offsets.Tls_offset = tlsOffset
 
+	if !cfg.IsOOMDisabled() {
+		mbucketsAddr, err := extractMbucketsAddress(file)
+		if err != nil {
+			return nil, fmt.Errorf("failed to extract mbuckets offset: %w", err)
+		}
+		if mbucketsAddr != 0 {
+			log.Debugf("found mbuckets at 0x%x", mbucketsAddr)
+		}
+		offsets.Mbuckets_addr = mbucketsAddr
+	}
+
 	d := &goData{
 		fileID:    info.FileID(),
 		goVersion: goVersion,

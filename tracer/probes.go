@@ -120,6 +120,7 @@ func (c *ProbeContext) sysVarSetters() []sysVar {
 		{"vma_vm_flags_offset", sv.vma_vm_flags_offset},
 		{"task_group_leader_offset", sv.task_group_leader_offset},
 		{"task_start_time_offset", sv.task_start_time_offset},
+		{"task_tgid_offset", sv.task_tgid_offset},
 	}
 	return append(vars, sv.pidNamespaceVars()...)
 }

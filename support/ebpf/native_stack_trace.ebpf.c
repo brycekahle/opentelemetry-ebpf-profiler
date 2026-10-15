@@ -44,6 +44,10 @@ BPF_RODATA_VAR(u32, task_stack_offset, 0)
 // The offset of start_time within `task_struct`.
 BPF_RODATA_VAR(u32, task_start_time_offset, 0)
 
+// task_tgid_offset is set during load time.
+// The offset of tgid within `task_struct`.
+BPF_RODATA_VAR(u32, task_tgid_offset, 0)
+
 // stack_ptregs_offset is set during load time.
 // The offset of struct pt_regs within the kernel entry stack.
 BPF_RODATA_VAR(u32, stack_ptregs_offset, 0)

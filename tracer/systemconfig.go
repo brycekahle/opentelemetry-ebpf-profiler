@@ -47,6 +47,7 @@ type SysConfigVars struct {
 	vma_vm_flags_offset      uint32
 	task_group_leader_offset uint32
 	task_start_time_offset   uint32
+	task_tgid_offset         uint32
 	pid_ns_translation_mode  uint8
 	target_pid_ns_level      uint32
 	target_pid_ns_dev        uint64
@@ -208,7 +209,7 @@ func parsePIDNamespaceLayout(spec *btf.Spec, layout *support.PIDNamespaceLayout)
 }
 
 // parseBTF resolves the SystemConfig data from kernel BTF
-func parseBTF(vars *SysConfigVars, needTPBase, needProcessStartTime bool,
+func parseBTF(vars *SysConfigVars, needTPBase, needProcessStartTime, needPID bool,
 	pidNamespaceMode PIDNamespaceTranslationMode,
 ) error {
 	fh, err := os.Open("/sys/kernel/btf/vmlinux")
@@ -258,6 +259,14 @@ func parseBTF(vars *SysConfigVars, needTPBase, needProcessStartTime bool,
 			return err
 		}
 		vars.task_start_time_offset = uint32(startTimeOffset)
+	}
+
+	if needPID {
+		tgidOffset, err := calculateFieldOffset(taskStruct, "tgid")
+		if err != nil {
+			return err
+		}
+		vars.task_tgid_offset = uint32(tgidOffset)
 	}
 
 	if needPIDNamespaceLayout {
@@ -505,7 +514,8 @@ func determineSysConfig(coll *cebpf.CollectionSpec, maps map[string]*cebpf.Map,
 		!interpretersConfig.Python.IsDisabled() ||
 		!interpretersConfig.Ruby.IsDisabled() ||
 		!interpretersConfig.Go.IsLabelsDisabled()
-	err := parseBTF(vars, needTPBase, needProcessStartTime, pidNamespaceMode)
+	needPID := !interpretersConfig.Go.IsOOMDisabled()
+	err := parseBTF(vars, needTPBase, needProcessStartTime, needPID, pidNamespaceMode)
 	if err != nil {
 		if pidNamespaceMode == PIDNamespaceTranslationModeRecursive {
 			return fmt.Errorf("recursive PID namespace translation requires readable kernel BTF with task and PID namespace layout: %w", err)
@@ -557,7 +567,7 @@ func determineSysConfig(coll *cebpf.CollectionSpec, maps map[string]*cebpf.Map,
 	}
 
 	log.Debugf(
-		"Found offsets: task stack %#x, pt_regs %#x, tpbase %#x, vma vm_file %#x, vma vm_flags %#x, group_leader %#x, start_time %#x, target_pid_ns_level %d",
+		"Found offsets: task stack %#x, pt_regs %#x, tpbase %#x, vma vm_file %#x, vma vm_flags %#x, group_leader %#x, start_time %#x, tgid %#x, target_pid_ns_level %d",
 		vars.task_stack_offset,
 		vars.stack_ptregs_offset,
 		vars.tpbase_offset,
@@ -565,6 +575,7 @@ func determineSysConfig(coll *cebpf.CollectionSpec, maps map[string]*cebpf.Map,
 		vars.vma_vm_flags_offset,
 		vars.task_group_leader_offset,
 		vars.task_start_time_offset,
+		vars.task_tgid_offset,
 		vars.target_pid_ns_level)
 
 	return nil
@@ -823,6 +834,9 @@ func loadRodataVars(coll *cebpf.CollectionSpec, kmod *kallsyms.Module, cfg *Conf
 	}
 	if err := coll.Variables["task_start_time_offset"].Set(rodataVars.task_start_time_offset); err != nil {
 		return fmt.Errorf("failed to set task_start_time_offset: %v", err)
+	}
+	if err := coll.Variables["task_tgid_offset"].Set(rodataVars.task_tgid_offset); err != nil {
+		return fmt.Errorf("failed to set task_tgid_offset: %v", err)
 	}
 
 	*out = rodataVars

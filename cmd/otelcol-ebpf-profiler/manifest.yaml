@@ -21,6 +21,8 @@ extensions:
   - gomod: go.opentelemetry.io/ebpf-profiler v0.0.202640
     import: go.opentelemetry.io/ebpf-profiler/probes/offcpu
   - gomod: go.opentelemetry.io/ebpf-profiler v0.0.202640
+    import: go.opentelemetry.io/ebpf-profiler/probes/oom
+  - gomod: go.opentelemetry.io/ebpf-profiler v0.0.202640
     import: go.opentelemetry.io/ebpf-profiler/probes/uprobe
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/pprofextension v0.163.0
 
