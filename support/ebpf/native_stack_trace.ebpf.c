@@ -45,6 +45,10 @@ BPF_RODATA_VAR(u32, task_stack_offset, 0)
 // time on CLOCK_BOOTTIME, the same clock as bpf_ktime_get_boot_ns().
 BPF_RODATA_VAR(u32, task_start_boottime_offset, 0)
 
+// task_tgid_offset is set during load time.
+// The offset of tgid within `task_struct`.
+BPF_RODATA_VAR(u32, task_tgid_offset, 0)
+
 // stack_ptregs_offset is set during load time.
 // The offset of struct pt_regs within the kernel entry stack.
 BPF_RODATA_VAR(u32, stack_ptregs_offset, 0)

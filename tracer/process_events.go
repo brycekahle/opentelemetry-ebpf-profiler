@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/ebpf-profiler/internal/log"
 	"go.opentelemetry.io/ebpf-profiler/internal/perfutil"
 	"go.opentelemetry.io/ebpf-profiler/libpf"
+	"go.opentelemetry.io/ebpf-profiler/process"
 )
 
 // mmapEventRingPages sizes the per-CPU perf ring buffer used for mmap events.
@@ -72,6 +73,10 @@ func (t *Tracer) handleMmapRecord(ctx context.Context, record perf.Record) {
 	case t.pidEvents <- pidTID:
 	case <-ctx.Done():
 	}
+}
+
+func (t *Tracer) SyncProcess(pid, tid uint32) {
+	t.processManager.SynchronizeProcess(process.New(libpf.PID(pid), libpf.PID(tid)))
 }
 
 func mmapRecordPIDTID(record perf.Record) (libpf.PIDTID, bool) {

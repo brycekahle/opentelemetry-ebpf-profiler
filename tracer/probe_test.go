@@ -159,9 +159,7 @@ func TestEnableRegistersSnapshotSource(t *testing.T) {
 	profileType := &samples.TypeMetadata{}
 	probe := &snapshotTestProbe{profile: samples.SnapshotProfile{ProfileType: profileType}}
 	tracer := &Tracer{
-		origins:           &originRegistry{},
-		preTraceHandlers:  make(map[uint16][]PreTraceHandler),
-		postTraceHandlers: make(map[uint16][]PostTraceHandler),
+		origins: &originRegistry{},
 	}
 
 	require.NoError(t, tracer.Enable(context.Background(), probe))

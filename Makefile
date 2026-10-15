@@ -1,7 +1,7 @@
 .PHONY: all all-common clean ebpf generate generate-collector test test-deps \
 	test-junit test-luajit-offsets protobuf docker-image agent license-check license-save \
 	integration-test-binaries \
-	codespell lint format format-ebpf format-go pprof-execs \
+	codespell lint format format-ebpf format-go pprof-execs oom-execs \
 	processctx-execs tlsvar-execs host-integration-tests \
 	pprof_1_23 pprof_1_24 pprof_1_24_cgo otelcol-ebpf-profiler \
 	rust-components rust-targets rust-tests vanity-import-check vanity-import-fix \
@@ -141,8 +141,9 @@ TESTDATA_DIRS:= \
 	reporter/testdata
 
 GOLABELS_TESTDATA_TARGETS := pprof_stable pprof_stable_buildinfo_cgo pprof_stable_cgo pprof_stable_cgo_pie
+OOM_TESTDATA_TARGETS := go_oom
 
-test-deps: $(GOLABELS_TESTDATA_TARGETS)
+test-deps: $(GOLABELS_TESTDATA_TARGETS) $(OOM_TESTDATA_TARGETS)
 	$(foreach testdata_dir, $(TESTDATA_DIRS), \
 		($(MAKE) -C "$(testdata_dir)") || exit ; \
 	)
@@ -187,7 +188,12 @@ pprof_stable_cgo:
 pprof_stable_cgo_pie:
 	CGO_ENABLED=1 go test -C ./interpreter/go/integrationtests/pprof -c -ldflags '-extldflags "-static"' -trimpath -buildmode=pie -tags $(GO_TAGS),withcgo,integration -o ./../$@
 
-integration-test-binaries: generate ebpf pprof-execs
+oom-execs: go_oom
+
+go_oom:
+	go test -C ./interpreter/go/integrationtests/oom -c -ldflags '-extldflags "-static"' -trimpath -tags $(GO_TAGS),withcgo,integration -o ./../$@
+
+integration-test-binaries: generate ebpf pprof-execs oom-execs
 	$(foreach test_name, $(TEST_INTEGRATION_BINARY_DIRS), \
 		(go test -ldflags='-extldflags=-static' -trimpath -c \
 			-tags $(GO_TAGS),static_build,integration \
