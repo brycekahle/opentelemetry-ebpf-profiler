@@ -24,7 +24,7 @@ SEC("tracepoint/syscalls/sys_exit_prctl")
 int tracepoint__sys_exit_prctl(void *ctx)
 {
   struct task_struct *task = (struct task_struct *)bpf_get_current_task();
-  long ptregs_addr         = get_task_pt_regs(task);
+  u64 ptregs_addr          = get_task_pt_regs(task);
   if (!ptregs_addr) {
     goto exit;
   }

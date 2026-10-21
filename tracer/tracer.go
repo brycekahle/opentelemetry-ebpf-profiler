@@ -30,7 +30,6 @@ import (
 	"go.opentelemetry.io/ebpf-profiler/internal/log"
 	"go.opentelemetry.io/ebpf-profiler/internal/perfutil"
 	"go.opentelemetry.io/ebpf-profiler/interpreter/interpreterconfig"
-	"go.opentelemetry.io/ebpf-profiler/libpf/pfunsafe"
 	"go.opentelemetry.io/ebpf-profiler/process"
 	"go.opentelemetry.io/ebpf-profiler/reporter/samples"
 
@@ -200,6 +199,8 @@ type Tracer struct {
 	// customLabels validates custom label keys/values pulled from eBPF and
 	// tracks how many were dropped due to invalid UTF-8.
 	customLabels customLabelValidator
+
+	threadLabels threadLabelResolver
 
 	// sysConfigVars holds kernel struct offsets determined at startup, passed
 	// to custom probes via Enable so they can reference the same layout.
@@ -1088,7 +1089,7 @@ func (vd *variableDataDecoder) decodeBytes(end uint16, field string) ([]uint8, e
 		return nil, fmt.Errorf("%s end %d: not in range [%d, %d]: %w",
 			field, end, vd.pos, len(vd.raw), errRecordUnexpectedSize)
 	}
-	data := vd.raw[vd.pos:end]
+	data := vd.raw[vd.pos:end:end]
 	vd.pos = (end + 7) &^ 7
 	return data, nil
 }
@@ -1105,7 +1106,7 @@ func (vd *variableDataDecoder) copyUint64(end uint16, field string) ([]uint64, e
 	}
 
 	src := unsafe.Slice((*uint64)(unsafe.Pointer(unsafe.SliceData(val))), n)
-	dst := vd.dst[:n]
+	dst := vd.dst[:n:n]
 	copy(dst, src)
 	vd.dst = vd.dst[n:]
 	return dst, nil
@@ -1129,16 +1130,15 @@ func (t *Tracer) loadBpfTrace(raw []byte) (*libpf.EbpfTrace, error) {
 
 	trace := t.tracePool.Get().(*libpf.EbpfTrace)
 	*trace = libpf.EbpfTrace{
-		Comm:             libpf.NewComm(ptr.Comm),
-		APMTraceID:       *(*libpf.APMTraceID)(unsafe.Pointer(&ptr.Apm_trace_id)),
-		APMTransactionID: *(*libpf.APMTransactionID)(unsafe.Pointer(&ptr.Apm_transaction_id)),
-		PID:              libpf.PID(ptr.Pid),
-		TID:              libpf.PID(ptr.Tid),
-		Origin:           ptr.Origin,
-		Value:            int64(ptr.Value),
-		KTime:            int64(ptr.Ktime),
-		CpuID:            ptr.Cpu_id,
-		NumFrames:        ptr.Num_frames,
+		Comm:      libpf.NewComm(ptr.Comm),
+		TraceID:   *(*libpf.TraceID)(unsafe.Pointer(&ptr.Trace_id)),
+		SpanID:    *(*libpf.SpanID)(unsafe.Pointer(&ptr.Span_id)),
+		PID:       libpf.PID(ptr.Pid),
+		TID:       libpf.PID(ptr.Tid),
+		Origin:    ptr.Origin,
+		KTime:     int64(ptr.Ktime),
+		CpuID:     ptr.Cpu_id,
+		NumFrames: ptr.Num_frames,
 	}
 
 	if t.origins.lookup(trace.Origin) == nil {
@@ -1147,7 +1147,14 @@ func (t *Tracer) loadBpfTrace(raw []byte) (*libpf.EbpfTrace, error) {
 
 	vd := variableDataDecoder{raw: variableData, dst: trace.FrameDataBuf[:]}
 
+	// Context values precede the kernel/user frames; the region is empty for
+	// origins without a value.
 	var err error
+	trace.ContextValues, err = vd.copyUint64(ptr.Context_value_end, "context value")
+	if err != nil {
+		return nil, err
+	}
+
 	trace.KernelFrames, err = vd.copyUint64(ptr.Kernel_frame_end, "kernel_frame")
 	if err != nil {
 		return nil, err
@@ -1158,28 +1165,16 @@ func (t *Tracer) loadBpfTrace(raw []byte) (*libpf.EbpfTrace, error) {
 		return nil, err
 	}
 
+	if payload, err := vd.decodeBytes(ptr.Thread_label_end, "thread label"); err != nil {
+		return nil, err
+	} else if len(payload) > 0 {
+		decoder := t.processManager.ThreadLabelDecoderForPID(trace.PID)
+		trace.CustomLabels = t.threadLabels.resolve(payload, decoder)
+	}
 	if labelData, err := vd.decodeBytes(ptr.Golang_label_end, "golang label"); err != nil {
 		return nil, err
 	} else if len(labelData) > 0 {
-		labels := unsafe.Slice(
-			(*support.GolangLabel)(unsafe.Pointer(unsafe.SliceData(labelData))),
-			len(labelData)/support.Sizeof_GolangLabel)
-		trace.CustomLabels = make(map[libpf.String]libpf.String, len(labels))
-
-		for i := range labels {
-			keyBytes, ok := t.customLabels.validateKey(labels[i].Key[:])
-			if !ok {
-				log.Debugf("Dropping Go custom label with empty or invalid UTF-8 name")
-				continue
-			}
-			valBytes, ok := t.customLabels.validateValue(labels[i].Val[:])
-			if !ok {
-				log.Debugf("Dropping Go custom label %s with invalid UTF-8 value", pfunsafe.ToString(keyBytes))
-				continue
-			}
-			trace.CustomLabels[libpf.Intern(pfunsafe.ToString(keyBytes))] =
-				libpf.Intern(pfunsafe.ToString(valBytes))
-		}
+		trace.CustomLabels = t.customLabels.decode(labelData, trace.CustomLabels)
 	}
 	return trace, nil
 }
@@ -1239,6 +1234,7 @@ func (t *Tracer) StartMapMonitors(ctx context.Context, traceOutChan chan<- *libp
 			metrics.AddSlice(traceEventMetricCollector())
 			metrics.AddSlice(t.eBPFMetricsCollector(translateIDs, previousMetricValue))
 			metrics.AddSlice(t.customLabels.getAndResetMetrics())
+			metrics.AddSlice(t.threadLabels.getAndResetMetrics())
 		})
 	}
 
@@ -1412,6 +1408,12 @@ type originRegistry struct {
 // Register hands out a fresh origin ID and stores metadata for it, keyed by
 // that ID.
 func (r *originRegistry) Register(metadata *samples.TypeMetadata) (uint16, error) {
+	if len(metadata.SampleTypes) == 0 {
+		return 0, fmt.Errorf("origin registry entry needs at least one sample type")
+	}
+	if metadata.AppendValues == nil {
+		return 0, fmt.Errorf("origin registry entry needs AppendValues")
+	}
 	if last := r.lastID.Load(); last >= math.MaxUint16 {
 		return 0, fmt.Errorf("maximum number of origin registry entries exceeded")
 	}

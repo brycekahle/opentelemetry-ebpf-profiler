@@ -98,8 +98,8 @@ const (
 	HSTSIDSegMapMask      = C.HS_TSID_SEG_MAP_MASK
 )
 
-type ApmSpanID C.ApmSpanID
-type ApmTraceID C.ApmTraceID
+type SpanID C.SpanID
+type TraceID C.TraceID
 type Event C.Event
 type GolangLabel C.GolangLabel
 type OffsetRange C.OffsetRange
@@ -111,14 +111,11 @@ type StackDeltaPageInfo C.StackDeltaPageInfo
 type StackDeltaPageKey C.StackDeltaPageKey
 type SystemAnalysis C.SystemAnalysis
 type TSDInfo C.TSDInfo
-type DTVInfo C.DTVInfo
 type TLSVarInfo C.TLSVarInfo
 type Trace C.Trace
 type UnwindInfo C.UnwindInfo
 
-type ApmIntProcInfo C.ApmIntProcInfo
 type BEAMProcInfo C.BEAMProcInfo
-type DotnetProcInfo C.DotnetProcInfo
 type GoRuntimeOffsets C.GoRuntimeOffsets
 type HotspotProcInfo C.HotspotProcInfo
 type PHPProcInfo C.PHPProcInfo
@@ -134,8 +131,6 @@ const (
 	Sizeof_TraceWithData = C.sizeof_Trace + C.sizeof_TraceData
 	Sizeof_GolangLabel   = C.sizeof_GolangLabel
 
-	sizeof_ApmIntProcInfo        = C.sizeof_ApmIntProcInfo
-	sizeof_DotnetProcInfo        = C.sizeof_DotnetProcInfo
 	sizeof_PHPProcInfo           = C.sizeof_PHPProcInfo
 	sizeof_RubyProcInfo          = C.sizeof_RubyProcInfo
 	sizeof_ThreadContextProcInfo = C.sizeof_ThreadContextProcInfo
@@ -194,16 +189,15 @@ const (
 
 	V8FpContextSize = C.V8_FP_CONTEXT_SIZE
 
-	V8FileTypeMarker       = C.V8_FILE_TYPE_MARKER
-	V8FileTypeByteCode     = C.V8_FILE_TYPE_BYTECODE
-	V8FileTypeNativeSFI    = C.V8_FILE_TYPE_NATIVE_SFI
-	V8FileTypeNativeCode   = C.V8_FILE_TYPE_NATIVE_CODE
-	V8FileTypeNativeJSFunc = C.V8_FILE_TYPE_NATIVE_JSFUNC
-	V8FileTypeMask         = C.V8_FILE_TYPE_MASK
+	V8FrameTypeMarker     = C.V8_FRAME_TYPE_MARKER
+	V8FrameTypeByteCode   = C.V8_FRAME_TYPE_BYTECODE
+	V8FrameTypeNativeSFI  = C.V8_FRAME_TYPE_NATIVE_SFI
+	V8FrameTypeNativeCode = C.V8_FRAME_TYPE_NATIVE_CODE
+	V8FrameTypeMask       = C.V8_FRAME_TYPE_MASK
 
-	V8LineCookieShift = C.V8_LINE_COOKIE_SHIFT
-	V8LineCookieMask  = C.V8_LINE_COOKIE_MASK
-	V8LineDeltaMask   = C.V8_LINE_DELTA_MASK
+	V8DataDeltaMask     = C.V8_DATA_DELTA_MASK
+	V8DataCodeKindShift = C.V8_DATA_CODE_KIND_SHIFT
+	V8DataCodeKindMask  = C.V8_DATA_CODE_KIND_MASK
 
 	RubyFrameTypeNone     = C.RUBY_FRAME_TYPE_NONE
 	RubyFrameTypeCmeIseq  = C.RUBY_FRAME_TYPE_CME_ISEQ
@@ -214,6 +208,7 @@ const (
 
 	LJCframeSpaceX86 = C.LUAJIT_CFRAME_SPACE_X86_64
 	LJCframeSpaceArm = C.LUAJIT_CFRAME_SPACE_AARCH64
+	LJJitMarker      = C.LUAJIT_JIT_MARKER
 )
 
 var MetricsTranslation = []metrics.MetricID{
@@ -295,13 +290,8 @@ var MetricsTranslation = []metrics.MetricID{
 	C.metricID_UnwindNativeErrChaseIrqStackLink:           metrics.IDUnwindNativeErrChaseIrqStackLink,
 	C.metricID_UnwindV8ErrNoProcInfo:                      metrics.IDUnwindV8ErrNoProcInfo,
 	C.metricID_UnwindNativeErrBadUnwindInfoIndex:          metrics.IDUnwindNativeErrBadUnwindInfoIndex,
-	C.metricID_UnwindApmIntErrReadTsdBase:                 metrics.IDUnwindApmIntErrReadTsdBase,
-	C.metricID_UnwindApmIntErrReadCorrBufPtr:              metrics.IDUnwindApmIntErrReadCorrBufPtr,
-	C.metricID_UnwindApmIntErrReadCorrBuf:                 metrics.IDUnwindApmIntErrReadCorrBuf,
-	C.metricID_UnwindApmIntReadSuccesses:                  metrics.IDUnwindApmIntReadSuccesses,
 	C.metricID_UnwindDotnetAttempts:                       metrics.IDUnwindDotnetAttempts,
 	C.metricID_UnwindDotnetFrames:                         metrics.IDUnwindDotnetFrames,
-	C.metricID_UnwindDotnetErrNoProcInfo:                  metrics.IDUnwindDotnetErrNoProcInfo,
 	C.metricID_UnwindDotnetErrBadFP:                       metrics.IDUnwindDotnetErrBadFP,
 	C.metricID_UnwindDotnetErrCodeHeader:                  metrics.IDUnwindDotnetErrCodeHeader,
 	C.metricID_UnwindDotnetErrCodeTooLarge:                metrics.IDUnwindDotnetErrCodeTooLarge,
