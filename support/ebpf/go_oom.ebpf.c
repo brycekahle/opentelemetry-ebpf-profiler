@@ -8,7 +8,7 @@
 
 #define E2BIG 7
 #define SIGKILL	9
-#define MAX_BUCKETS 60000
+#define MAX_BUCKETS 30000
 
 struct _trace_event_raw_mark_victim {
 	u64 unused;

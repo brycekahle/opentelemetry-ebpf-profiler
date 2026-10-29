@@ -906,7 +906,7 @@ typedef struct GoBucketHeader {
 } GoBucketHeader;
 
 // We must have a fixed size stack even though the real Go stack depth is variable.
-#define MAX_GO_OOM_STACK_DEPTH 64
+#define MAX_GO_OOM_STACK_DEPTH 128
 typedef struct GoBucket {
   struct GoBucketHeader header;
   u64 stk[MAX_GO_OOM_STACK_DEPTH];

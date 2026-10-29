@@ -352,7 +352,7 @@ type GoBucketHeader struct {
 }
 type GoBucket struct {
 	Header GoBucketHeader
-	Stk    [64]uint64
+	Stk    [128]uint64
 	Mem    GoMemRecord
 }
 
@@ -366,7 +366,7 @@ const (
 	sizeof_RubyProcInfo          = 0x40
 	sizeof_ThreadContextProcInfo = 0xc
 
-	Sizeof_GoBucket = 0x270
+	Sizeof_GoBucket = 0x470
 )
 
 const (
