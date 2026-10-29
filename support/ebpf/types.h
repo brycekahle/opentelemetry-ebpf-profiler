@@ -892,7 +892,7 @@ typedef struct GoMemRecordCycle {
 // https://github.com/golang/go/blob/9450dc4b5513dbdd6454bb83c902a6612dcd5733/src/runtime/mprof.go#L87
 typedef struct GoMemRecord {
   struct GoMemRecordCycle active;
-  struct GoMemRecordCycle	future[3];
+  struct GoMemRecordCycle future[3];
 } GoMemRecord;
 
 // https://github.com/golang/go/blob/9450dc4b5513dbdd6454bb83c902a6612dcd5733/src/runtime/mprof.go#L75

@@ -86,7 +86,7 @@ func (op *Probe) PreHandleTrace(trace *libpf.EbpfTrace) bool {
 	buf := unsafe.Slice((*byte)(unsafe.Pointer(&bucket)), bucketSize)
 
 	entries := make([]samples.SnapshotSample, 0, numBuckets)
-	for i := uint64(0); i < numBuckets; i++ {
+	for i := range numBuckets {
 		n, err := op.bucketMmap.ReadAt(buf, int64(i*bucketSize))
 		if err != nil || uint64(n) < bucketSize {
 			return false
@@ -94,7 +94,7 @@ func (op *Probe) PreHandleTrace(trace *libpf.EbpfTrace) bool {
 
 		allocObjects := bucket.Mem.Active.Allocs
 		freeObjects := bucket.Mem.Active.Frees
-		for j := 0; j < 3; j++ {
+		for j := range 3 {
 			allocObjects += bucket.Mem.Future[j].Allocs
 			freeObjects += bucket.Mem.Future[j].Frees
 		}

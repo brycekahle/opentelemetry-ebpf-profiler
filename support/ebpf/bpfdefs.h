@@ -174,7 +174,8 @@ static inline int bpf_tail_call(void *ctx, void *map, int index)
   return -1;
 }
 
-static long (*bpf_loop)(u32 nr_loops, void *callback_fn, void *callback_ctx, u64 flags) = (void *)BPF_FUNC_loop;
+static long (*bpf_loop)(u32 nr_loops, void *callback_fn, void *callback_ctx, u64 flags) = (void *)
+  BPF_FUNC_loop;
 
   #define bpf_probe_read_user_with_test_fault bpf_probe_read_user
 

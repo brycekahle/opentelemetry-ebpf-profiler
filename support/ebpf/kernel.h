@@ -205,7 +205,7 @@ enum {
 // Flags for bpf_map_create
 enum {
   BPF_F_NO_PREALLOC = (1U << 0),
-  BPF_F_MMAPABLE = (1U << 10),
+  BPF_F_MMAPABLE    = (1U << 10),
   // (other values omitted here)
 };
 

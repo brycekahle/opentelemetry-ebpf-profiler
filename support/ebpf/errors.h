@@ -111,7 +111,8 @@ typedef enum ErrorCode {
   // Ruby: Unable to read objspace flags
   ERR_RUBY_READ_OBJSPACE_FLAGS = 3033,
 
-  // Ruby: Native resume requested after Ruby JIT, but unwinding was stopped because JIT frames cannot resume native unwinding
+  // Ruby: Native resume requested after Ruby JIT, but unwinding was stopped because JIT frames
+  // cannot resume native unwinding
   ERR_RUBY_JIT_NATIVE_RESUME_UNSUPPORTED = 3034,
 
   // Native: Unable to find the code section in the stack delta page info map
@@ -141,7 +142,8 @@ typedef enum ErrorCode {
   // Native: Unable to read the kernel-mode registers
   ERR_NATIVE_READ_KERNELMODE_REGS = 4009,
 
-  // Native: Unexpectedly encountered a kernel mode pointer while attempting to unwind user-mode stack
+  // Native: Unexpectedly encountered a kernel mode pointer while attempting to unwind user-mode
+  // stack
   ERR_NATIVE_UNEXPECTED_KERNEL_ADDRESS = 4011,
 
   // Native: Unable to locate the PID page mapping for the current instruction pointer

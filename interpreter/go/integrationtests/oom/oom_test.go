@@ -13,6 +13,7 @@ func TestOOM(t *testing.T) {
 	time.Sleep(1 * time.Second)
 	var data [][]byte
 	for {
+		//nolint:staticcheck
 		data = append(data, make([]byte, 1_000_000))
 		time.Sleep(1 * time.Millisecond)
 	}
