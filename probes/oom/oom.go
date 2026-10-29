@@ -160,11 +160,11 @@ func (op *Probe) Load(_ context.Context, reg tracer.ProbeRegistrar, pctx *tracer
 		}
 	}
 	// TODO use cfg.VerboseMode to set this
-	if v, ok := coll.Variables["with_debug_output"]; ok {
-		if err := v.Set(uint32(1)); err != nil {
-			return fmt.Errorf("setting with_debug_output: %w", err)
-		}
-	}
+	//if v, ok := coll.Variables["with_debug_output"]; ok {
+	//	if err := v.Set(uint32(1)); err != nil {
+	//		return fmt.Errorf("setting with_debug_output: %w", err)
+	//	}
+	//}
 
 	dataMap, err := cebpf.NewMap(coll.Maps["mbuckets_data"])
 	if err != nil {
