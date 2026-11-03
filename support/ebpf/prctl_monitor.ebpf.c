@@ -36,7 +36,7 @@ SEC("tracepoint/syscalls/sys_exit_prctl")
 int tracepoint__sys_exit_prctl(UNUSED void *ctx)
 {
   struct task_struct *task = (struct task_struct *)bpf_get_current_task();
-  long ptregs_addr         = get_task_pt_regs(task);
+  u64 ptregs_addr          = get_task_pt_regs(task);
   if (!ptregs_addr) {
     goto exit;
   }
@@ -80,6 +80,11 @@ int tracepoint__sys_exit_prctl(UNUSED void *ctx)
   if (!name_ptr) {
     goto exit;
   }
+
+  // The prctl return value is intentionally ignored. Per OTEP 4719, naming the
+  // mapping is best-effort and fails on kernels without CONFIG_ANON_VMA_NAME.
+  // A memfd-backed context is still discoverable as "/memfd:OTEL_CTX" in that
+  // case, so the attempt itself is the signal to resynchronize.
 
   u32 pid = 0;
   u32 tid = 0;

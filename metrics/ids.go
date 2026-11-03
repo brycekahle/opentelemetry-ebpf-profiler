@@ -560,26 +560,11 @@ const (
 	// Number of times the Hotspot unwind instructions requested LR unwinding mid-trace
 	IDUnwindHotspotErrLrUnwindingMidTrace = 256
 
-	// Number of failures to get TSD base for APM correlation
-	IDUnwindApmIntErrReadTsdBase = 257
-
-	// Number of failures read the APM correlation pointer
-	IDUnwindApmIntErrReadCorrBufPtr = 258
-
-	// Number of failures read the APM correlation buffer
-	IDUnwindApmIntErrReadCorrBuf = 259
-
-	// Number of successful reads of APM correlation info
-	IDUnwindApmIntReadSuccesses = 260
-
 	// Number of attempted dotnet unwinds
 	IDUnwindDotnetAttempts = 261
 
 	// Number of unwound dotnet frames
 	IDUnwindDotnetFrames = 262
-
-	// Number of times we didn't find an entry for this process in the dotnet process info array
-	IDUnwindDotnetErrNoProcInfo = 263
 
 	// Number of failures to read dotnet frame pointer data
 	IDUnwindDotnetErrBadFP = 264
@@ -713,12 +698,21 @@ const (
 	// Number of thread context attribute payloads truncated to fit the buffer
 	IDUnwindThreadContextAttrsTruncated = 309
 
+	// Number of samples whose thread-context labels were discarded because no decoder was available for the process
+	IDThreadContextLabelsNoDecoder = 310
+
+	// Number of thread-context label entries dropped as undecodable
+	IDThreadContextDroppedEntriesUndecodable = 311
+
+	// Number of processes whose published thread-context label schema was rejected
+	IDThreadContextSchemaRejected = 312
+
 	// Number of OTEL_CTX header addresses recorded by the prctl monitor
-	IDNumOtelCtxEvents = 310
+	IDNumOtelCtxEvents = 313
 
 	// Number of times we failed to update otel_ctx_events
-	IDOtelCtxEventsErr = 311
+	IDOtelCtxEventsErr = 314
 
 	// max number of ID values, keep this as *last entry*
-	IDMax = 312
+	IDMax = 315
 )
