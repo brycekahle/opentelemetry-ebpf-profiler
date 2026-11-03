@@ -168,6 +168,10 @@ func (tp *testProcess) PID() libpf.PID {
 	return tp.pid
 }
 
+func (tp *testProcess) TID() libpf.PID {
+	return tp.pid
+}
+
 func (tp *testProcess) GetMachineData() process.MachineData {
 	return process.MachineData{}
 }

@@ -215,6 +215,10 @@ type Tracer struct {
 	// profile type metadata is looked up by.
 	origins *originRegistry
 
+	// snapshotSources are probes that implement SnapshotSource and produce
+	// additional profiles at each collection interval.
+	snapshotSources []SnapshotSource
+
 	// done is closed when the tracer encounters an unrecoverable error.
 	// Use Done() to obtain a read-only channel for use in select statements.
 	done     chan libpf.Void
