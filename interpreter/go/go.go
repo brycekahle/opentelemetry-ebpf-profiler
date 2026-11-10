@@ -62,8 +62,10 @@ func (d *goData) String() string {
 }
 
 func (d *goData) Attach(ebpf interpreter.EbpfHandler, pid libpf.PID,
-	_ libpf.Address, _ remotememory.RemoteMemory) (interpreter.Instance, error) {
-	if err := ebpf.UpdateProcData(libpf.Go, pid, unsafe.Pointer(&d.offsets)); err != nil {
+	bias libpf.Address, _ remotememory.RemoteMemory) (interpreter.Instance, error) {
+	procOffsets := d.offsets
+	procOffsets.Mbuckets_addr = uint64(libpf.Address(procOffsets.Mbuckets_addr) + bias)
+	if err := ebpf.UpdateProcData(libpf.Go, pid, unsafe.Pointer(&procOffsets)); err != nil {
 		return nil, err
 	}
 	if d.pclntab != nil {
