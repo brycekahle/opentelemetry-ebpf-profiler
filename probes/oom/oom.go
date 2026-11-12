@@ -4,7 +4,6 @@
 // Package oom implements a probe that
 package oom // import "go.opentelemetry.io/ebpf-profiler/probes/oom"
 
-import "C"
 import (
 	"context"
 	"errors"
