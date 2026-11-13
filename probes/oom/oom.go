@@ -14,6 +14,7 @@ import (
 	"github.com/cilium/ebpf/link"
 	"github.com/zeebo/xxh3"
 
+	"go.opentelemetry.io/ebpf-profiler/internal/log"
 	"go.opentelemetry.io/ebpf-profiler/libpf"
 	"go.opentelemetry.io/ebpf-profiler/libpf/pfelf"
 	"go.opentelemetry.io/ebpf-profiler/process"
@@ -67,6 +68,7 @@ func (op *Probe) Origin() uint16 {
 
 func (op *Probe) PreHandleTrace(trace *libpf.EbpfTrace) bool {
 	if len(trace.ContextValues) == 0 {
+		log.Warnf("ignoring empty OOM eBPF trace for PID %d", trace.PID)
 		return false
 	}
 	numBuckets := trace.ContextValues[0]
@@ -117,6 +119,7 @@ func (op *Probe) PreHandleTrace(trace *libpf.EbpfTrace) bool {
 		entries = append(entries, sample)
 	}
 
+	log.Infof("queued OOM profile for PID %d with %d entries", trace.PID, len(entries))
 	op.queuedProfiles = append(op.queuedProfiles, samples.SnapshotProfile{
 		ProfileType: oomProfileType,
 		Samples:     entries,
@@ -132,6 +135,7 @@ func (op *Probe) PostHandleTrace(_ *libpf.Trace) {
 func (op *Probe) ProduceSnapshots() []samples.SnapshotProfile {
 	profiles := op.queuedProfiles
 	op.queuedProfiles = nil
+	log.Infof("producing %d OOM profiles", len(profiles))
 	return profiles
 }
 
