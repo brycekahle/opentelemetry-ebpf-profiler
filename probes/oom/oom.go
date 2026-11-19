@@ -85,7 +85,12 @@ func (op *Probe) PreHandleTrace(trace *libpf.EbpfTrace) bool {
 	entries := make([]samples.SnapshotSample, 0, numBuckets)
 	for i := range numBuckets {
 		n, err := op.bucketMmap.ReadAt(buf, int64(i*bucketSize))
-		if err != nil || uint64(n) < bucketSize {
+		if err != nil {
+			log.Warnf("error reading OOM bucket mmap: bucket=%d offset=%d: %s", i, i*bucketSize, err)
+			return false
+		}
+		if uint64(n) < bucketSize {
+			log.Warnf("insufficient data reading OOM bucket mmap: offset=%d expected=%d received=%d", i*bucketSize, bucketSize, n)
 			return false
 		}
 
