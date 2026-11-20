@@ -66,6 +66,7 @@ func (d *goData) Attach(ebpf interpreter.EbpfHandler, pid libpf.PID,
 	procOffsets := d.offsets
 	if procOffsets.Mbuckets_addr != 0 {
 		procOffsets.Mbuckets_addr = uint64(libpf.Address(procOffsets.Mbuckets_addr) + bias)
+		log.Infof("attach go PID %d with mbuckets 0x%x", pid, procOffsets.Mbuckets_addr)
 	}
 	if err := ebpf.UpdateProcData(libpf.Go, pid, unsafe.Pointer(&procOffsets)); err != nil {
 		return nil, err
@@ -125,29 +126,38 @@ func loader(cfg Config, info *interpreter.LoaderInfo) (interpreter.Data, error) 
 		return nil, fmt.Errorf("unsupported Go version %s (need >= 1.13 and <= 1.27)", goVersion)
 	}
 
-	pclntab, err := elfunwindinfo.NewGopclntab(file)
-	if err != nil {
-		return nil, err
+	d := &goData{
+		fileID:    info.FileID(),
+		goVersion: goVersion,
+		offsets:   getOffsets(goVersion),
 	}
-	defer func() {
-		if pclntab != nil {
-			pclntab.Close()
-		}
-	}()
 
-	offsets := getOffsets(goVersion)
-	tlsOffset, err := extractTLSGOffset(file, pclntab)
-	switch {
-	case errors.Is(err, libpf.ErrSymbolNotFound):
-		return nil, fmt.Errorf("failed to lookup symbol in %s: %v", info.FileName(), err)
-	case errors.Is(err, errDecodeSymbol), errors.Is(err, errRuntimeIsCgoUnavailable):
-		log.Debugf("In %s: %v", info.FileName(), err)
-	case errors.Is(err, nil):
-		// Nothing to do - just continue
-	default:
-		return nil, fmt.Errorf("failed to extract TLS offset: %w", err)
+	pclntab, err := elfunwindinfo.NewGopclntab(file)
+	if err == nil {
+		defer func() {
+			if pclntab != nil {
+				pclntab.Close()
+			}
+		}()
+
+		tlsOffset, err := extractTLSGOffset(file, pclntab)
+		switch {
+		case errors.Is(err, libpf.ErrSymbolNotFound):
+			log.Warnf("failed to lookup symbol in %s: %v", info.FileName(), err)
+		case errors.Is(err, errDecodeSymbol), errors.Is(err, errRuntimeIsCgoUnavailable):
+			log.Debugf("In %s: %v", info.FileName(), err)
+		case errors.Is(err, nil):
+			d.offsets.Tls_offset = tlsOffset
+		default:
+			log.Warnf("failed to extract TLS offset: %s", err)
+		}
+
+		if !cfg.IsSymbolizationDisabled() {
+			d.pclntab = pclntab
+			d.refs.Store(1)
+			pclntab = nil
+		}
 	}
-	offsets.Tls_offset = tlsOffset
 
 	if !cfg.IsOOMDisabled() {
 		mbucketsAddr, err := extractMbucketsAddress(file)
@@ -155,20 +165,11 @@ func loader(cfg Config, info *interpreter.LoaderInfo) (interpreter.Data, error) 
 			return nil, fmt.Errorf("failed to extract mbuckets offset: %w", err)
 		}
 		if mbucketsAddr != 0 {
-			log.Debugf("found mbuckets at 0x%x", mbucketsAddr)
+			log.Infof("file %s mbuckets at 0x%x", info.FileName(), mbucketsAddr)
 		}
-		offsets.Mbuckets_addr = mbucketsAddr
+		d.offsets.Mbuckets_addr = mbucketsAddr
 	}
 
-	d := &goData{
-		fileID:    info.FileID(),
-		goVersion: goVersion,
-		offsets:   offsets,
-	}
-	if !cfg.IsSymbolizationDisabled() {
-		d.pclntab = pclntab
-		d.refs.Store(1)
-		pclntab = nil
-	}
+	log.Infof("file %s go version %s", info.FileName(), goVersion)
 	return d, nil
 }
